@@ -3,15 +3,17 @@ Backfill Octopus Energy consumption and rates data to ADLS.
 Usage: python backfill_octopus.py
 """
 import datetime as dt
-from octopusclient.config import Settings
+
 from octopusclient.client import OctopusClient
-from octopusclient.storage import DataLakeWriter, StateStore
+from octopusclient.config import Settings
+from octopusclient.storage import DataLakeWriter
+
 
 def main():
     settings = Settings.from_env()
     client = OctopusClient(settings.octopus_api_key, settings.account_number)
     writer = DataLakeWriter(settings)
-    state = StateStore(settings, writer.service_client)
+    # ...existing code...
     period_to = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
     for meter in settings.meters:
         # Backfill 30 days by default

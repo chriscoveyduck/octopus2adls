@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import datetime as dt
-from typing import Dict, List, Any, Optional, Tuple
 import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from .config import Meter
 
@@ -75,7 +77,12 @@ class OctopusClient:
             page += 1
         return results
 
-    def get_consumption(self, meter: Meter, start: dt.datetime, end: dt.datetime) -> List[Dict[str, Any]]:
+    def get_consumption(
+        self,
+        meter: Meter,
+        start: dt.datetime,
+        end: dt.datetime
+    ) -> List[Dict[str, Any]]:
         # API uses UTC ISO format with trailing 'Z' (no offset like +00:00)
         base_path = (
             f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
@@ -91,7 +98,13 @@ class OctopusClient:
         }
         return self._paginate(path, params)
 
-    def get_unit_rates(self, product_code: str, tariff_code: str, start: dt.datetime, end: dt.datetime) -> List[Dict[str, Any]]:
+    def get_unit_rates(
+        self,
+        product_code: str,
+        tariff_code: str,
+        start: dt.datetime,
+        end: dt.datetime
+    ) -> List[Dict[str, Any]]:
         """Retrieve standard unit rates for given product+tariff within window."""
         base_path = (
             f"/products/{product_code}/electricity-tariffs/{tariff_code}/standard-unit-rates"
@@ -157,11 +170,16 @@ class OctopusClient:
         results = data.get('results', [])
         return results[0] if results else None
 
-    def find_earliest_interval_deep(self, meter: Meter, baseline_start: dt.datetime | None = None) -> Dict[str, Any] | None:
+    def find_earliest_interval_deep(
+        self,
+        meter: Meter,
+        baseline_start: dt.datetime | None = None
+    ) -> Dict[str, Any] | None:
         """Return earliest interval by issuing a single wide query.
 
         The Octopus API defaults to only the last 7 days if period_from/period_to omitted.
-        To discover true earliest we supply a far-earlier period_from (baseline) and set ascending order.
+    To discover true earliest we supply a far-earlier period_from (baseline)
+    and set ascending order.
         baseline_start: earliest date to attempt (default 2015-01-01 UTC).
         """
         if baseline_start is None:
@@ -191,7 +209,9 @@ class OctopusClient:
         )
 
     @staticmethod
-    def parse_tariff_code(tariff_code: str) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
+    def parse_tariff_code(
+        tariff_code: str
+    ) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
         """Parse a tariff code into (kind, register, product_code, region).
 
         Empirical pattern examples:
@@ -211,7 +231,10 @@ class OctopusClient:
         product_code = '-'.join(core_parts) if core_parts else None
         return kind, register, product_code, region
 
-    def discover_active_tariffs(self, as_of: Optional[dt.datetime] = None) -> Dict[str, Dict[str, str]]:
+    def discover_active_tariffs(
+        self,
+        as_of: Optional[dt.datetime] = None
+    ) -> Dict[str, Dict[str, str]]:
         """Discover active product & tariff codes per energy kind at the given time.
 
         Returns: { 'electricity': {'tariff_code': ..., 'product_code': ...}, 'gas': {...}}

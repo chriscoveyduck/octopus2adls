@@ -1,7 +1,8 @@
 import datetime as dt
-import pytest
+
 from octopus2adls.config import Meter, Settings
-from octopus2adls.storage import StateStore, DataLakeWriter
+from octopus2adls.storage import DataLakeWriter, StateStore
+
 
 class DummyService:
     def __init__(self):

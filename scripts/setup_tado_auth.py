@@ -3,12 +3,13 @@ Tado token management utility.
 Handles initial authentication and token storage for Azure Functions.
 """
 import os
-import json
-from azure.keyvault.secrets import SecretClient
+
 from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+from dotenv import load_dotenv
+
 from tadoclient.client import TadoClient
 from tadoclient.config import TadoSettings
-from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 

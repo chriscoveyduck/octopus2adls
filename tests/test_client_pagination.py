@@ -1,6 +1,8 @@
 import datetime as dt
+
 from octopus2adls.client import OctopusClient
 from octopus2adls.config import Meter
+
 
 class DummyResp:
     def __init__(self, status_code, json_data):

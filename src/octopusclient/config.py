@@ -1,8 +1,10 @@
 from __future__ import annotations
-import os
+
 import json
+import os
 from dataclasses import dataclass
 from typing import List, Optional
+
 
 @dataclass
 class Meter:

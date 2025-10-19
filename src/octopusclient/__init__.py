@@ -6,4 +6,4 @@ Provides Python interface to Octopus Energy REST API endpoints.
 __all__ = ['OctopusClient', 'OctopusSettings', 'Meter']
 
 from .client import OctopusClient
-from .config import OctopusSettings, Meter
+from .config import Meter, OctopusSettings

@@ -1,7 +1,8 @@
 import datetime as dt
-import json
+
 from octopus2adls.config import Settings
 from octopus2adls.storage import StateStore
+
 
 class DummyBlob:
     def __init__(self):

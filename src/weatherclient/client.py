@@ -1,9 +1,11 @@
 from __future__ import annotations
-import datetime as dt
-from typing import Dict, List, Any
-import logging
 
-from .config import WeatherSettings, WeatherLocation
+import datetime as dt
+import logging
+from typing import Any, Dict, List
+
+from .config import WeatherLocation, WeatherSettings
+
 
 class WeatherClient:
     """

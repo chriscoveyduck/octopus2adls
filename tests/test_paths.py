@@ -1,6 +1,7 @@
 from octopus2adls.config import Meter, Settings
 from octopus2adls.storage import DataLakeWriter
 
+
 class DummySettings(Settings):
     pass
 

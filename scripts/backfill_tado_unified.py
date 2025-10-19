@@ -1,26 +1,29 @@
 """
-Unified Tado backfill script: single dayReport fetch per device/day parsing both demand and temperature.
+Unified Tado backfill script: single dayReport fetch per device/day parsing both
+demand and temperature.
 
 Usage (example):
     python scripts/backfill_tado_unified.py --start 2024-09-11 --end 2024-09-13
 
-Writes daily parquet files into two folders (demand, temps) under the configured ADLS container path.
-Keeps existing separation; could be unified later.
+Writes daily parquet files into two folders (demand, temps) under the configured
+ADLS container path. Keeps existing separation; could be unified later.
 """
 from __future__ import annotations
-import argparse
-import os
-import datetime as dt
-import pandas as pd
-from typing import List
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import argparse
+import datetime as dt
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+
+import pandas as pd
+from dotenv import load_dotenv
+
+from adlsclient.config import ADLSConfig
+from adlsclient.writer import DataLakeWriter
 from tadoclient.client import TadoClient
 from tadoclient.config import TadoSettings
-from adlsclient.writer import DataLakeWriter
-from adlsclient.config import ADLSConfig
-from dotenv import load_dotenv
 
 logger = logging.getLogger("tado.backfill")
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -74,13 +77,17 @@ def _write_day(
 
 
 def fetch_device_day_report(client: TadoClient, device, date_str: str):
-    """Fetch dayReport for a single device and date. Returns (date_str, device, day_json) or None on error."""
+    """
+    Fetch dayReport for a single device and date.
+    Returns (date_str, device, day_json) or None on error.
+    """
     try:
         day_json = client.get_day_report(device, date_str)
         return date_str, device, day_json
     except Exception as e:
         logger.warning(
-            f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}"
+            f"Failed dayReport fetch for zone {device.zone_id} "
+            f"on {date_str}: {e}"
         )
         return None
 

@@ -1,19 +1,19 @@
-import azure.functions as func
-import logging
 import datetime as dt
-import json
+import logging
 import os
 import sys
+
+import azure.functions as func
+
+from octopusclient.client import OctopusClient
+from octopusclient.config import Settings
+from octopusclient.storage import DataLakeWriter, StateStore
 
 # Ensure src package path precedes functions duplicates
 SRC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
-# Import from new modular packages
-from octopusclient.config import Settings
-from octopusclient.client import OctopusClient
-from octopusclient.storage import DataLakeWriter, StateStore
 
 def main(myTimer: func.TimerRequest) -> None:
     """
@@ -104,7 +104,12 @@ def run_octopus_ingestion() -> tuple[int, int]:
     )
     return success_count, error_count
 
-def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, meter, settings: Settings) -> int:
+def ingest_meter_consumption(
+    client: OctopusClient,
+    writer: DataLakeWriter,
+    meter,
+    settings: Settings
+) -> int:
     """Incremental ingestion for a single meter."""
     state_store = StateStore(settings, writer.service_client)
     
@@ -117,7 +122,8 @@ def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, mete
     # we always overlap by 30 minutes when resuming.
     now = dt.datetime.now(dt.timezone.utc)
     if last_interval:
-        # Overlap by one half-hour interval; subtract 30 minutes (plus a 1s epsilon) to ensure inclusivity
+    # Overlap by one half-hour interval; subtract 30 minutes
+    # (plus a 1s epsilon) to ensure inclusivity
         overlap_start = last_interval - dt.timedelta(minutes=30, seconds=1)
         # Guard against going before a sensible minimum (e.g., 2015 earliest data)
         earliest_allowed = dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc)
@@ -171,10 +177,10 @@ def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, mete
 def run_tado_ingestion() -> tuple[int, int]:
     """Run unified Tado heating ingestion (demand + temps) writing to 'heating' container."""
     logging.info("Starting Tado heating ingestion (unified)")
-    from tadoclient.config import TadoSettings
-    from tadoclient.client import TadoClient
-    from adlsclient.writer import DataLakeWriter
     from adlsclient.config import ADLSConfig
+    from adlsclient.writer import DataLakeWriter
+    from tadoclient.client import TadoClient
+    from tadoclient.config import TadoSettings
     from tadoclient.state import TadoStateStore
 
     try:
@@ -197,7 +203,8 @@ def run_tado_ingestion() -> tuple[int, int]:
         return 0, 0
 
     now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
-    # Determine per-device last processed date (day-level) based on latest demand event timestamp stored in state
+    # Determine per-device last processed date (day-level)
+    # based on latest demand event timestamp stored in state
     # We store state per (device_id, zone_id) using last interval semantics
     per_device_start: dict[str, dt.datetime] = {}
     earliest = now
@@ -205,7 +212,8 @@ def run_tado_ingestion() -> tuple[int, int]:
     for d in devices:
         last = state.get_last_interval(d.device_id, d.zone_id)
         if last:
-            # Resume from last timestamp truncated to date (to ensure we don't miss tail of that day)
+            # Resume from last timestamp truncated to date
+            # (to ensure we don't miss tail of that day)
             start = last.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             start = now - default_lookback
@@ -227,11 +235,22 @@ def run_tado_ingestion() -> tuple[int, int]:
             try:
                 report = tado_client.get_day_report(device, date_str)
                 demand_events, temp_records = tado_client.parse_day_report(device, report)
-                # Filter out events that are not newer than state last interval (for partial first day) 
+                # Filter out events that are not newer than state last interval
+                # (for partial first day)
                 last_processed = state.get_last_interval(device.device_id, device.zone_id)
                 if last_processed:
-                    demand_events = [e for e in demand_events if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > last_processed]
-                    temp_records = [e for e in temp_records if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > last_processed]
+                    demand_events = [
+                        e for e in demand_events
+                        if dt.datetime.fromisoformat(
+                            e['timestamp'].replace('Z','+00:00')
+                        ) > last_processed
+                    ]
+                    temp_records = [
+                        e for e in temp_records
+                        if dt.datetime.fromisoformat(
+                            e['timestamp'].replace('Z','+00:00')
+                        ) > last_processed
+                    ]
                 if demand_events:
                     writer.write_demand_events(device.device_id, demand_events)
                 if temp_records:

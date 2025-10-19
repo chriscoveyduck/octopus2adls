@@ -1,6 +1,8 @@
 import pandas as pd
+
+ # ...existing code...
 from octopus2adls.storage import DataLakeWriter
-from octopus2adls.config import Settings, Meter
+
 
 class DummyWriter(DataLakeWriter):
     def __init__(self, settings):
@@ -12,14 +14,9 @@ class DummyWriter(DataLakeWriter):
 
 
 def test_rate_match_cost():
-    settings = Settings(
-        octopus_api_key='x',
-        account_number='a',
-        storage_account_name='acc',
-        meters=[]
-    )
-    writer = DummyWriter(settings)
-    meter = Meter(kind='electricity', mpan_or_mprn='mpan', serial='serial')
+    # ...existing code...
+    # ...existing code...
+    # ...existing code...
     consumption = [
         {
             "interval_start": "2024-01-01T00:00:00Z",

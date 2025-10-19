@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import datetime as dt
 import json
+
 from azure.storage.blob import BlobServiceClient
 
 STATE_BLOB = 'state/last_interval.json'
@@ -28,7 +30,7 @@ class StateStore:
             val = j.get(source_key)
             if val:
                 # Normalize Z to +00:00 and ensure timezone aware UTC
-                original = val  # kept for potential debugging
+                # ...existing code...
                 # crude detection of offset
                 has_tz = (
                     ('Z' in val) or ('+' in val[10:]) or ('-' in val[10:])

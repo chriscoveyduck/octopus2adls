@@ -1,12 +1,14 @@
 from __future__ import annotations
-import datetime as dt
-from typing import Dict, List, Any, Tuple, Iterator
-import logging
-import httpx
-import os
-import time
 
-from .config import TadoSettings, TadoDevice
+import datetime as dt
+import logging
+import time
+from typing import Any, Dict, Iterator, List, Tuple
+
+import httpx
+
+from .config import TadoDevice, TadoSettings
+
 
 class TadoClient:
     def get_day_report(self, device, date_str):
@@ -50,8 +52,9 @@ class TadoClient:
         Authenticate with Tado API using Device Code Flow (OAuth 2.0 RFC 8628).
         This is an interactive process that requires user authorization in a browser.
         """
-        import httpx
         import time
+
+        import httpx
         
         client_id = "1bb50063-6b0c-4d11-bd99-387f4a91cc46"  # Official tado° client ID
         
@@ -72,12 +75,12 @@ class TadoClient:
         expires_in = device_data["expires_in"]
         interval = device_data["interval"]
         
-        print(f"\nTado Authentication Required:")
+        print("\nTado Authentication Required:")
         print(f"1. Visit: {verification_uri}")
         print(f"2. User code (should auto-fill): {user_code}")
-        print(f"3. Log in to your tado° account")
+        print("3. Log in to your tado° account")
         print(f"4. Waiting for authorization (expires in {expires_in} seconds)...")
-        
+
         # Step 2: Poll for token
         token_url = "https://login.tado.com/oauth2/token"
         token_params = {
@@ -85,7 +88,7 @@ class TadoClient:
             "device_code": device_code,
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code"
         }
-        
+
         start_time = time.time()
         while time.time() - start_time < expires_in:
             try:
@@ -107,7 +110,7 @@ class TadoClient:
             except Exception as e:
                 self._log.error(f"Token polling error: {e}")
                 time.sleep(interval)
-        
+
         raise RuntimeError("Tado authentication timed out. Please try again.")
 
     def authenticate_from_key_vault(self, key_vault_name: str):
@@ -116,9 +119,9 @@ class TadoClient:
         Handles token expiration with multi-layer fallback strategy.
         Use this method in Azure Functions for non-interactive authentication.
         """
-        from azure.keyvault.secrets import SecretClient
-        from azure.identity import DefaultAzureCredential
         import httpx
+        from azure.identity import DefaultAzureCredential
+        from azure.keyvault.secrets import SecretClient
         
         key_vault_url = f"https://{key_vault_name}.vault.azure.net/"
         credential = DefaultAzureCredential()
@@ -347,7 +350,7 @@ class TadoClient:
                     )
                     continue
             
-            current_date += dt.timedelta(days=1)
+        current_date += dt.timedelta(days=1)
         
         return events
 
@@ -455,7 +458,7 @@ class TadoClient:
                 )
                 continue
             
-            current_date += dt.timedelta(days=1)
+        current_date += dt.timedelta(days=1)
         
         return temperature_records
 
@@ -569,7 +572,10 @@ class TadoClient:
                         if (power == "ON" and temp_setting and 
                             isinstance(temp_setting, dict)):
                             celsius_target = temp_setting.get("celsius")
-                            if celsius_target is not None and isinstance(celsius_target, (int, float)):
+                            if (
+                                celsius_target is not None 
+                                and isinstance(celsius_target, (int, float))
+                            ):
                                 target_record = {
                                     "device_id": device.device_id,
                                     "zone_id": device.zone_id,
@@ -586,7 +592,12 @@ class TadoClient:
         
         return temperature_records
 
-    def get_temperature_events(self, device: TadoDevice, period_from: dt.datetime, period_to: dt.datetime) -> List[Dict[str, Any]]:
+    def get_temperature_events(
+        self,
+        device: TadoDevice,
+        period_from: dt.datetime,
+        period_to: dt.datetime,
+    ) -> List[Dict[str, Any]]:
         """
         Compatibility method that calls get_temperature_data.
         """
@@ -609,24 +620,7 @@ class TadoClient:
         # TODO: Implement Tado API calls
         raise NotImplementedError("Tado heating data retrieval not yet implemented")
     
-    def get_temperature_events(self, device: TadoDevice, period_from: dt.datetime, period_to: dt.datetime) -> List[Dict[str, Any]]:
-        """
-        Fetch temperature readings for a TRV over a time period.
-        Returns a list of events: {trv_id, zone_id, temperature, timestamp}
-        Timestamps are normalized to UTC ISO 8601.
-        """
-        events = []
-        # TODO: Replace with real Tado API call to fetch temperature data for this TRV
-        # Example endpoint: /api/v2/homes/{home_id}/zones/{zone_id}/temperature
-        # Simulate with placeholder data for now
-        event = {
-            "trv_id": device.device_id,
-            "zone_id": device.zone_id,
-            "temperature": 21.5,  # Example temperature
-            "timestamp": period_from.replace(tzinfo=dt.timezone.utc).isoformat().replace('+00:00', 'Z'),
-        }
-        events.append(event)
-        return events
+    # ...existing code...
     
     def enumerate_devices(self) -> list:
         """
@@ -659,7 +653,10 @@ class TadoClient:
             return devices
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                self._log.error(f"Access denied to Tado API. Check token permissions and home_id: {self.settings.home_id}")
+                self._log.error(
+                    f"Access denied to Tado API. Check token permissions and home_id: "
+                    f"{self.settings.home_id}"
+                )
                 # Return placeholder devices for testing
                 self._log.warning("Using placeholder device for testing")
                 return [TadoDevice(
@@ -671,30 +668,23 @@ class TadoClient:
             else:
                 raise
 
-    def get_day_report(self, device: TadoDevice, date_str: str) -> Dict[str, Any]:
-        """Fetch raw dayReport JSON once for a device+date (no parsing)."""
-        import httpx
-        if not self._access_token:
-            self.authenticate()
+    # ...existing code...
         
         # Proactively refresh token if it's close to expiring
         self._ensure_valid_token()
         
-        url = (
-            f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/"
-            f"{device.zone_id}/dayReport?date={date_str}"
-        )
-        headers = {"Authorization": f"Bearer {self._access_token}"}
-        resp = httpx.get(url, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
+        # ...existing code...
 
-    def parse_day_report(self, device: TadoDevice, day_data: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def parse_day_report(
+        self,
+        device: TadoDevice,
+        day_data: Dict[str, Any],
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Parse a dayReport JSON for both demand events and temperature records.
         Returns (demand_events, temperature_records)."""
         demand_events: List[Dict[str, Any]] = []
         temperature_records: List[Dict[str, Any]] = []
-        date_prefix = None
+    # ...existing code...
         # Demand (callForHeat)
         call_for_heat = day_data.get("callForHeat", {})
         intervals = call_for_heat.get("dataIntervals") or []
@@ -724,7 +714,8 @@ class TadoClient:
         humidity_lookup = {}
         for hp in humidity_points:
             try:
-                ts = hp.get("timestamp"); val = hp.get("value")
+                ts = hp.get("timestamp")
+                val = hp.get("value")
                 if ts and isinstance(val, (int, float)):
                     humidity_lookup[ts] = val
             except Exception:
@@ -769,11 +760,15 @@ class TadoClient:
                 continue
         return demand_events, temperature_records
 
-    def iterate_day_reports(self, period_from: dt.datetime, period_to: dt.datetime) -> Iterator[Tuple[str, TadoDevice, Dict[str, Any]]]:
-    """
-    Yield (date_str, device, day_report_json) for each device/day in range
-    (single fetch per pair).
-    """
+    def iterate_day_reports(
+        self,
+        period_from: dt.datetime,
+        period_to: dt.datetime,
+    ) -> Iterator[Tuple[str, TadoDevice, Dict[str, Any]]]:
+        """
+        Yield (date_str, device, day_report_json) for each device/day in range
+        (single fetch per pair).
+        """
         devices = [d for d in self.enumerate_devices() if d.device_type == "trv"]
         current_date = period_from.date()
         end_date = period_to.date()
@@ -788,4 +783,4 @@ class TadoClient:
                         f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}"
                     )
                     continue
-            current_date += dt.timedelta(days=1)
+        current_date += dt.timedelta(days=1)

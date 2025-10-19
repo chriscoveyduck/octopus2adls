@@ -10,9 +10,11 @@ Outputs:
   - Min/max of interval_start / interval_end columns if present
   - Distinct meter identifiers if present
 """
-import sys
 import os
+import sys
+
 import pandas as pd
+
 
 def main():
     if len(sys.argv) != 2:

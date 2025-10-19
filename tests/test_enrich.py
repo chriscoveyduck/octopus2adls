@@ -1,5 +1,5 @@
-import pandas as pd
-from octopus2adls.enrich import vectorized_rate_join, detect_missing_intervals
+from octopus2adls.enrich import detect_missing_intervals, vectorized_rate_join
+
 
 def test_vectorized_rate_join_basic():
     consumption = [

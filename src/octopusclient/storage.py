@@ -4,14 +4,14 @@ Storage operations have moved to adlsclient package.
 This module provides compatibility wrappers.
 """
 from __future__ import annotations
-from typing import List, Dict
 
 # Import shared ADLS components
 from adlsclient.config import ADLSConfig
-from adlsclient.writer import DataLakeWriter as BaseDataLakeWriter
 from adlsclient.state import StateStore as BaseStateStore
+from adlsclient.writer import DataLakeWriter as BaseDataLakeWriter
 
-from .config import OctopusSettings, Meter
+from .config import OctopusSettings
+
 
 class DataLakeWriter(BaseDataLakeWriter):
     """

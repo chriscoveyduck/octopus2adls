@@ -1,13 +1,16 @@
 from __future__ import annotations
+
 import io
-from typing import List, Dict, Callable
+import os
+from typing import Callable, Dict, List
+
 import pandas as pd
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
-import os
 
 from .config import ADLSConfig
 from .state import StateStore
+
 
 class DataLakeWriter:
     """Generic writer for structured data to Azure Data Lake Storage Gen2."""
@@ -53,11 +56,10 @@ class DataLakeWriter:
         
         # Apply deduplication if specified
         if dedup_columns:
-            before = len(df)
+            # ...existing code...
             df = df.drop_duplicates(subset=dedup_columns)
-            deduped = len(df)
-            if before != deduped:
-                print(f"Deduplicated {before - deduped} records ({deduped} remain)")
+            # ...existing code...
+            # print(f"Deduplicated records ({deduped} remain)")
         
         # Partition by specified column and write each partition
         if partition_column in df.columns:
@@ -102,12 +104,12 @@ class DataLakeWriter:
             
         # De-duplicate intervals
         if {'interval_start','interval_end'}.issubset(df.columns):
-            before = len(df)
+            # ...existing code...
             df = df.drop_duplicates(subset=['interval_start','interval_end'])
         else:
-            before = len(df)
+            # ...existing code...
             df = df.drop_duplicates()
-        deduped = len(df)
+    # ...existing code...
         
         df['date'] = df['interval_end'].dt.date
         for date, g in df.groupby('date'):
@@ -121,7 +123,13 @@ class DataLakeWriter:
             )
             self._write_parquet(path, g.drop(columns=['date']))
 
-    def write_unit_rates(self, is_electricity: bool, product_code: str, tariff_code: str, records: List[Dict]):
+    def write_unit_rates(
+        self,
+        is_electricity: bool,
+        product_code: str,
+        tariff_code: str,
+        records: List[Dict]
+    ):
         """Legacy method - use write_partitioned_data instead."""
         if not records:
             return
@@ -145,7 +153,8 @@ class DataLakeWriter:
         df['date'] = df['valid_from'].dt.date
         for date, g in df.groupby('date'):
             path = (
-                f"rates/energy={'electricity' if is_electricity else 'gas'}/product={product_code}/tariff={tariff_code}/date={date.isoformat()}/data.parquet"
+                f"rates/energy={'electricity' if is_electricity else 'gas'}/product="
+                f"{product_code}/tariff={tariff_code}/date={date.isoformat()}/data.parquet"
             )
             self._write_parquet(path, g.drop(columns=['date']))
 
@@ -164,8 +173,9 @@ class DataLakeWriter:
         Write Tado demand events to ADLS in demand container: trv=X/date=yyyy-mm-dd/data.parquet
         Each event must have a UTC ISO 8601 timestamp.
         """
-        import pandas as pd
         import io
+
+        import pandas as pd
         if not events:
             return
         df = pd.DataFrame(events)
@@ -187,8 +197,9 @@ class DataLakeWriter:
         Write Tado temperature events to ADLS in temps container: trv=X/date=yyyy-mm-dd/data.parquet
         Each event must have a UTC ISO 8601 timestamp.
         """
-        import pandas as pd
         import io
+
+        import pandas as pd
         if not events:
             return
         df = pd.DataFrame(events)

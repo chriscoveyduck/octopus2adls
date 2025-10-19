@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 from typing import List, Optional
+
 
 @dataclass
 class TadoDevice:
@@ -19,7 +21,6 @@ class TadoSettings:
 
     @staticmethod
     def from_env() -> 'TadoSettings':
-        import os
         import json
         home_id = os.environ['TADO_HOME_ID']
         devices_json = os.environ.get('TADO_DEVICES_JSON')

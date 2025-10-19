@@ -1,6 +1,9 @@
 from __future__ import annotations
+
+from typing import Dict, List, Tuple
+
 import pandas as pd
-from typing import List, Dict, Tuple
+
 
 def vectorized_rate_join(consumption: List[Dict], rates: List[Dict]) -> pd.DataFrame:
     """Join unit rates to consumption intervals using searchsorted on valid_from.
