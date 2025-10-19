@@ -381,7 +381,8 @@ class TadoClient:
                         "requested": True,
                         "heat_demand": interval["value"],  # e.g., "LOW", "MEDIUM", "HIGH"
                         "timestamp": interval["from"],
-                        "duration_minutes": self._calculate_interval_minutes(interval["from"], interval["to"])
+                        "duration_minutes": self._calculate_interval_minutes(
+                            interval["from"], interval["to"])
                     })
         
         return events
@@ -430,14 +431,16 @@ class TadoClient:
                 
                 # Filter records to the requested time range
                 for record in day_records:
-                    record_time = dt.datetime.fromisoformat(record["timestamp"].replace('Z', '+00:00'))
+                    record_time = dt.datetime.fromisoformat(
+                        record["timestamp"].replace('Z', '+00:00'))
                     if period_from <= record_time <= period_to:
                         temperature_records.append(record)
                         
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
                     self._log.info(
-                        f"No temperature data available for zone {device.zone_id} on {date_str} (404)"
+                        f"No temperature data available for zone {device.zone_id} "
+                        f"on {date_str} (404)"
                     )
                 else:
                     self._log.warning(
@@ -463,7 +466,10 @@ class TadoClient:
         """
         import httpx
         
-        url = f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/{device.zone_id}/dayReport?date={date_str}"
+        url = (
+            f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/"
+            f"{device.zone_id}/dayReport?date={date_str}"
+        )
         headers = {"Authorization": f"Bearer {self._access_token}"}
         
         resp = httpx.get(url, headers=headers)
@@ -631,7 +637,9 @@ class TadoClient:
             self.authenticate()
         
         import httpx
-        url = f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones"
+        url = (
+            f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones"
+        )
         headers = {"Authorization": f"Bearer {self._access_token}"}
         
         try:
@@ -672,7 +680,10 @@ class TadoClient:
         # Proactively refresh token if it's close to expiring
         self._ensure_valid_token()
         
-        url = f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/{device.zone_id}/dayReport?date={date_str}"
+        url = (
+            f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/"
+            f"{device.zone_id}/dayReport?date={date_str}"
+        )
         headers = {"Authorization": f"Bearer {self._access_token}"}
         resp = httpx.get(url, headers=headers)
         resp.raise_for_status()
@@ -697,7 +708,11 @@ class TadoClient:
                     "requested": True,
                     "heat_demand": interval.get("value"),
                     "timestamp": interval.get("from"),
-                    "duration_minutes": self._calculate_interval_minutes(interval.get("from"), interval.get("to")) if interval.get("from") and interval.get("to") else None
+                    "duration_minutes": (
+                        self._calculate_interval_minutes(
+                            interval.get("from"), interval.get("to")
+                        ) if interval.get("from") and interval.get("to") else None
+                    )
                 })
             except Exception:
                 continue
@@ -755,7 +770,10 @@ class TadoClient:
         return demand_events, temperature_records
 
     def iterate_day_reports(self, period_from: dt.datetime, period_to: dt.datetime) -> Iterator[Tuple[str, TadoDevice, Dict[str, Any]]]:
-        """Yield (date_str, device, day_report_json) for each device/day in range (single fetch per pair)."""
+    """
+    Yield (date_str, device, day_report_json) for each device/day in range
+    (single fetch per pair).
+    """
         devices = [d for d in self.enumerate_devices() if d.device_type == "trv"]
         current_date = period_from.date()
         end_date = period_to.date()
@@ -766,6 +784,8 @@ class TadoClient:
                     data = self.get_day_report(device, date_str)
                     yield date_str, device, data
                 except Exception as e:
-                    self._log.warning(f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}")
+                    self._log.warning(
+                        f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}"
+                    )
                     continue
             current_date += dt.timedelta(days=1)

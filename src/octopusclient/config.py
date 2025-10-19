@@ -42,7 +42,9 @@ class OctopusSettings:
                 try:
                     parsed = json.loads(repaired)
                 except Exception as e:  # noqa: BLE001
-                    raise ValueError(f"Malformed METERS_JSON; unable to parse after repair attempt: {e}")
+                    raise ValueError(
+                        f"Malformed METERS_JSON; unable to parse after repair attempt: {e}"
+                    )
             for m in parsed:
                 meters.append(Meter(**m))
         

@@ -1,4 +1,5 @@
-"""Unified Tado backfill script: single dayReport fetch per device/day parsing both demand and temperature.
+"""
+Unified Tado backfill script: single dayReport fetch per device/day parsing both demand and temperature.
 
 Usage (example):
     python scripts/backfill_tado_unified.py --start 2024-09-11 --end 2024-09-13
@@ -78,7 +79,9 @@ def fetch_device_day_report(client: TadoClient, device, date_str: str):
         day_json = client.get_day_report(device, date_str)
         return date_str, device, day_json
     except Exception as e:
-        logger.warning(f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}")
+        logger.warning(
+            f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}"
+        )
         return None
 
 
@@ -110,7 +113,10 @@ def main():
         '--max-workers',
         type=int,
         default=7,
-        help='Maximum number of concurrent API requests per day (default: 7, matches typical zone count)'
+        help=(
+            'Maximum number of concurrent API requests per day (default: 7, '
+            'matches typical zone count)'
+        )
     )
     parser.add_argument(
         '--local-only',
