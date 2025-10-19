@@ -1,16 +1,18 @@
+
 # Infrastructure Overview
 
-This directory contains Bicep templates for deploying the Azure resources required for the Octopus -> ADLS ingestion solution.
+This directory contains Bicep templates for deploying the Azure resources required for the Energy Analytics Data Pipe solution (multi-source ingestion: Octopus, Tado, and future weather data).
 
 ## Resources
 
+
 Core resources deployed:
 
-- Storage Account (Data Lake Gen2) for raw and curated data, plus state
-- Azure Function App (Python) for scheduled ingestion
+- Storage Account (Data Lake Gen2) for raw and curated energy, heating, and weather data, plus state
+- Azure Function App (Python) for scheduled ingestion from multiple sources
 - App Service Plan / Consumption plan (depending on SKU) for Function
 - Application Insights for telemetry
-- Key Vault (optional future) for secrets (API key)
+- Key Vault (optional future) for secrets (API keys)
 - Log Analytics workspace for central logging (shared via diagnostic settings)
 
 ## Module Layout
@@ -28,11 +30,12 @@ infra/
 
 ## Deployment
 
+
 Example (Azure CLI):
 
 ```bash
 az deployment sub create \
-  --name octopus2adls-$(date +%Y%m%d%H%M%S) \
+  --name energy-analytics-data-pipe-$(date +%Y%m%d%H%M%S) \
   --location northeurope \
   --template-file infra/main.bicep \
   --parameters @infra/parameters.dev.json

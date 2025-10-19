@@ -8,5 +8,3 @@ pandas==2.1.4
 pyarrow==14.0.2
 python-dotenv==1.0.0
 octopus2adls_shared-0.1.0-py3-none-any.whl
-octopus2adls_shared-0.1.0-py3-none-any.whl
-octopus2adls_shared-0.1.0-py3-none-any.whl

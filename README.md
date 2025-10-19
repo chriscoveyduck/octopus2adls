@@ -1,60 +1,70 @@
-# octopus2adls
 
-Ingestion pipeline to extract smart meter consumption data from the [Octopus Energy API](https://developer.octopus.energy) and store it in Azure Data Lake Storage Gen2 (hierarchical namespace) for downstream BI / analytics (e.g. Dremio, Metabase).
+# Energy Analytics Data Pipe
+
+Flexible ingestion pipeline for energy analytics, supporting smart meter data from Octopus Energy, heating demand from Tado, and future weather sources. Data is stored in Azure Data Lake Storage Gen2 for downstream BI and analytics (Dremio, Metabase, etc).
+
 
 ## Features
 
-- Azure Function (timer) scheduled hourly (5 min past the hour) – pulls prior hour (minus safeguard) electricity & gas consumption
-- Idempotent incremental load using per-meter last interval state
+- Azure Function (timer) scheduled ingestion for electricity, gas, heating, and future weather data
+- Idempotent incremental load using per-meter/device last interval state
 - Partitioned Parquet layout optimized for query engines
 - Modular Bicep infrastructure (storage, function app, observability, RBAC)
+- Extensible client (pagination, retries) for new energy domains
+
 ```
-Octopus REST API --> Azure Function (Python Timer Trigger) --> ADLS Gen2 (consumption + curated) --> BI (Dremio/Metabase)
-										|\
-										| state (last interval JSON)
-										v
-						 Application Insights (telemetry)
+Octopus/Tado/Weather API
+	|\
+	|  (state: last interval JSON)
+	v
+Azure Function (Python Timer Trigger)
+	v
+ADLS Gen2 (consumption, heating, curated, weather)
+	v
+BI/Analytics (Dremio, Metabase, etc)
+	v
+Application Insights (telemetry)
 ```
-- Extensible client (pagination, retries) prepared for future tariff & product datasets
+
 
 ## High-Level Architecture
 
-Data containers (deployed):
+Data containers:
 
-- `consumption` (landing + enriched smart meter consumption, rates, costed data, state)
-- `heating` (combined heating demand events + temperature/setpoint readings from Tado)
-- `curated` (shared transformed / aggregated outputs for cross-domain analytics)
+- `consumption`: Smart meter consumption, rates, costed data, state (Octopus)
+- `heating`: Heating demand events, temperature, setpoints (Tado)
+- `weather`: External temperature & derived weather features (planned)
+- `curated`: Transformed/aggregated outputs for cross-domain analytics
 
-Future domain containers (not currently deployed; will be introduced when ingestion is implemented):
-- `weather` (planned – external temperature & derived weather features)
-																		v
-													 Application Insights (telemetry)
-```
 
 ## Data Model & Layout
 
-Data containers:
-
-- `consumption` (Octopus smart meter consumption + costed enrichment)
-- `heating` (Tado radiator demand events + temperatures + target setpoints)
-- `weather` (future – external temperature & weather features)
-- `curated` (shared transformed / aggregated outputs)
-Consumption path pattern (Parquet within the `consumption` container):
 
 Consumption path pattern (Parquet):
 State blob: `consumption/state/last_interval.json` mapping `<mpan|mprn>:<serial>` to last ingested `interval_end` (UTC ISO).
 
 ```
 consumption/
-	consumption/
-		kind=<electricity|gas>/
-			mpan_mprn=<id>/
-				serial=<meter_serial>/
-					date=YYYY-MM-DD/
-						data.parquet
+	kind=<electricity|gas>/
+		mpan_mprn=<id>/
+			serial=<meter_serial>/
+				date=YYYY-MM-DD/
+					data.parquet
+heating/
+	device_id=<id>/
+		date=YYYY-MM-DD/
+			data.parquet
+weather/
+	location=<id>/
+		date=YYYY-MM-DD/
+			data.parquet
+curated/
+	domain=<type>/
+		date=YYYY-MM-DD/
+			data.parquet
 ```
 
-Columns preserved from API (`interval_start`, `interval_end`, `consumption`, plus any returned like `unit` if available). Partitioning by date yields effective pruning for range queries; further partitions (kind/mpan/serial) support meter-level filtering.
+Columns preserved from API (`interval_start`, `interval_end`, `consumption`, plus any returned like `unit` if available). Partitioning by date yields effective pruning for range queries; further partitions (kind/mpan/serial/device/location/domain) support entity-level filtering.
 
 ### SMETS2 Interval Considerations
 
