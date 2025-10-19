@@ -23,7 +23,12 @@ class DummyService:
         return self.blob
 
 def test_state_roundtrip():
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     svc = DummyService()
     store = StateStore(settings, svc)
     assert store.get_last_interval('123','ABC') is None
@@ -33,13 +38,19 @@ def test_state_roundtrip():
     assert got == ts
 
 def test_half_hour_intervals():
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     svc = DummyService()
     store = StateStore(settings, svc)
     first = dt.datetime(2024,1,1,0,30)
     store.set_last_interval('999','HHH', first)
     assert store.get_last_interval('999','HHH') == first
-    # next should start from first (exclusive) handled in function logic (not here) but state keeps exact end
+    # next should start from first (exclusive) handled in function logic (not here)
+    # but state keeps exact end
     second = dt.datetime(2024,1,1,1,0)
     store.set_last_interval('999','HHH', second)
     assert store.get_last_interval('999','HHH') == second
