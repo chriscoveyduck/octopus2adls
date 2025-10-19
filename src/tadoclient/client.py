@@ -22,7 +22,9 @@ class TadoClient:
         zone_id = getattr(device, 'zone_id', None)
         if home_id is None or zone_id is None:
             raise ValueError("Device must have home_id and zone_id")
-        url = f"https://my.tado.com/api/v2/homes/{home_id}/zones/{zone_id}/dayReport?date={date_str}"
+        url = (
+            f"https://my.tado.com/api/v2/homes/{home_id}/zones/{zone_id}/dayReport?date={date_str}"
+        )
         headers = {"Authorization": f"Bearer {self._access_token}"}
         resp = httpx.get(url, headers=headers)
         resp.raise_for_status()
@@ -143,13 +145,17 @@ class TadoClient:
                     elif attempt == max_retries - 1:
                         raise e
                     else:
-                        self._log.warning(f"Token refresh attempt {attempt + 1} failed: {e}, retrying...")
+                        self._log.warning(
+                            f"Token refresh attempt {attempt + 1} failed: {e}, retrying..."
+                        )
                         import time
                         time.sleep(2 ** attempt)  # Exponential backoff
                 except Exception as retry_error:
                     if attempt == max_retries - 1:
                         raise retry_error
-                    self._log.warning(f"Token refresh attempt {attempt + 1} failed: {retry_error}, retrying...")
+                    self._log.warning(
+                        f"Token refresh attempt {attempt + 1} failed: {retry_error}, retrying..."
+                    )
                     import time
                     time.sleep(2 ** attempt)
             
@@ -201,24 +207,32 @@ class TadoClient:
             if secret_client and self._refresh_token != old_refresh_token:
                 try:
                     secret_client.set_secret("tado-refresh-token", self._refresh_token)
-                    self._log.info(f"Updated rotated refresh token in Key Vault: {self._refresh_token}")
+                    self._log.info(
+                        f"Updated rotated refresh token in Key Vault: {self._refresh_token}"
+                    )
                     # Immediately read back to verify persistence
                     verify_secret = secret_client.get_secret("tado-refresh-token").value
                     if verify_secret == self._refresh_token:
                         self._log.info("Verified refresh token persisted in Key Vault.")
                     else:
-                        self._log.error(f"Refresh token mismatch after update! Expected: {self._refresh_token}, Found: {verify_secret}")
+                        self._log.error(
+                            f"Refresh token mismatch after update! Expected: {self._refresh_token}, "
+                            f"Found: {verify_secret}"
+                        )
                 except Exception as e:
                     self._log.error(f"Failed to update or verify refresh token in Key Vault: {e}")
         
         expires_in = token_data.get("expires_in", 600)
         self._token_expires_in = expires_in
-        self._log.info(f"New access token obtained, expires in {expires_in} seconds ({expires_in/60:.1f} minutes)")
+        self._log.info(
+            f"New access token obtained, expires in {expires_in} seconds "
+            f"({expires_in/60:.1f} minutes)"
+        )
 
     def _ensure_valid_token(self):
         """
         Check if access token needs refresh and refresh it proactively.
-        Refreshes when 80% of token lifetime has elapsed (typically ~8 minutes for 10-minute tokens).
+    # Refreshes when 80% of token lifetime has elapsed (typically ~8 minutes for 10-minute tokens).
         If refresh token has expired, re-authenticates completely.
         """
         if not self._access_token:
@@ -231,7 +245,10 @@ class TadoClient:
         refresh_threshold = self._token_expires_in * 0.8  # Refresh at 80% of lifetime
         
         if time_elapsed >= refresh_threshold:
-            self._log.info(f"Proactively refreshing token after {time_elapsed:.1f}s (threshold: {refresh_threshold:.1f}s)")
+            self._log.info(
+                f"Proactively refreshing token after {time_elapsed:.1f}s "
+                f"(threshold: {refresh_threshold:.1f}s)"
+            )
             try:
                 if self._key_vault_client:
                     # Always get the latest refresh token from Key Vault before refreshing
@@ -280,7 +297,11 @@ class TadoClient:
             self._log.error(f"Failed to get homes: {e}")
             raise
 
-    def get_demand_events(self, period_from: dt.datetime, period_to: dt.datetime) -> List[Dict[str, Any]]:
+    def get_demand_events(
+        self,
+        period_from: dt.datetime,
+        period_to: dt.datetime
+    ) -> List[Dict[str, Any]]:
         """
         Fetch historical demand events for all TRVs using dayReport endpoint.
         Returns a list of events with actual historical timestamps and heating demands.

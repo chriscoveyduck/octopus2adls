@@ -36,7 +36,10 @@ def authenticate_and_store_tokens():
     if verify_refresh == client._refresh_token:
         print("Verified refresh token persisted in Key Vault.")
     else:
-        print(f"ERROR: Refresh token mismatch after update! Expected: {client._refresh_token}, Found: {verify_refresh}")
+        print(
+            f"ERROR: Refresh token mismatch after update! Expected: {client._refresh_token}, "
+            f"Found: {verify_refresh}"
+        )
 
     # Store access token temporarily (expires in 10 minutes)
     print(f"Storing access token in Key Vault: {client._access_token}")
@@ -45,7 +48,10 @@ def authenticate_and_store_tokens():
     if verify_access == client._access_token:
         print("Verified access token persisted in Key Vault.")
     else:
-        print(f"ERROR: Access token mismatch after update! Expected: {client._access_token}, Found: {verify_access}")
+        print(
+            f"ERROR: Access token mismatch after update! Expected: {client._access_token}, "
+            f"Found: {verify_access}"
+        )
 
 if __name__ == "__main__":
     authenticate_and_store_tokens()

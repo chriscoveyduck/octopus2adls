@@ -5,7 +5,12 @@ class DummySettings(Settings):
     pass
 
 def test_partition_path_building(monkeypatch):
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     writer = DataLakeWriter(settings)
     # monkeypatch the upload to avoid Azure call
     monkeypatch.setattr(writer, '_write_parquet', lambda path, df: path)

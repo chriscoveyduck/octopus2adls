@@ -16,13 +16,21 @@ def main():
     for meter in settings.meters:
         # Backfill 30 days by default
         period_from = period_to - dt.timedelta(days=settings.bootstrap_lookback_days)
-        print(f"Backfilling Octopus data for meter {meter.mpan_or_mprn} from {period_from} to {period_to}")
+        print(
+            f"Backfilling Octopus data for meter {meter.mpan_or_mprn} "
+            f"from {period_from} to {period_to}"
+        )
         # Fetch and write consumption
         records = client.get_consumption(meter, period_from, period_to)
         writer.write_consumption(meter, records)
         # Fetch and write rates
         rates = client.get_unit_rates(meter, period_from, period_to)
-        writer.write_unit_rates(meter.kind == 'electricity', meter.product_code, meter.tariff_code, rates)
+        writer.write_unit_rates(
+            meter.kind == 'electricity',
+            meter.product_code,
+            meter.tariff_code,
+            rates
+        )
         print(f"Done for meter {meter.mpan_or_mprn}")
 
 if __name__ == "__main__":

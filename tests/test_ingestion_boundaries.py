@@ -31,7 +31,12 @@ class DummyWriter(DataLakeWriter):
 
 def test_overlap_boundary():
     # Simulate state and overlap logic
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     writer = DummyWriter(settings)
     store = StateStore(settings, writer.service_client)
     meter = Meter(kind='gas', mpan_or_mprn='701337809', serial='E6E07565322221')
@@ -44,7 +49,12 @@ def test_overlap_boundary():
 
 def test_dst_transition():
     # Simulate DST boundary
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     writer = DummyWriter(settings)
     store = StateStore(settings, writer.service_client)
     meter = Meter(kind='electricity', mpan_or_mprn='1900021218905', serial='19L3269639')
@@ -56,7 +66,12 @@ def test_dst_transition():
 
 def test_state_advancement():
     # Simulate state advancement
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     writer = DummyWriter(settings)
     store = StateStore(settings, writer.service_client)
     meter = Meter(kind='electricity', mpan_or_mprn='1900021218905', serial='19L3269639')

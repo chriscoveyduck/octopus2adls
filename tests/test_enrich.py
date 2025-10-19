@@ -3,11 +3,23 @@ from octopus2adls.enrich import vectorized_rate_join, detect_missing_intervals
 
 def test_vectorized_rate_join_basic():
     consumption = [
-        {"interval_start": "2024-01-01T00:00:00Z", "interval_end": "2024-01-01T00:30:00Z", "consumption": 0.5},
-        {"interval_start": "2024-01-01T00:30:00Z", "interval_end": "2024-01-01T01:00:00Z", "consumption": 0.7},
+        {
+            "interval_start": "2024-01-01T00:00:00Z",
+            "interval_end": "2024-01-01T00:30:00Z",
+            "consumption": 0.5
+        },
+        {
+            "interval_start": "2024-01-01T00:30:00Z",
+            "interval_end": "2024-01-01T01:00:00Z",
+            "consumption": 0.7
+        },
     ]
     rates = [
-        {"valid_from": "2023-12-31T23:30:00Z", "valid_to": "2024-01-01T00:30:00Z", "value_inc_vat": 0.30},
+        {
+            "valid_from": "2023-12-31T23:30:00Z",
+            "valid_to": "2024-01-01T00:30:00Z",
+            "value_inc_vat": 0.30
+        },
         {"valid_from": "2024-01-01T00:30:00Z", "valid_to": None, "value_inc_vat": 0.28},
     ]
     df = vectorized_rate_join(consumption, rates)
@@ -17,12 +29,24 @@ def test_vectorized_rate_join_basic():
 
 def test_vectorized_rate_join_gap():
     consumption = [
-        {"interval_start": "2024-01-01T00:00:00Z", "interval_end": "2024-01-01T00:30:00Z", "consumption": 0.5},
-        {"interval_start": "2024-01-01T00:30:00Z", "interval_end": "2024-01-01T01:00:00Z", "consumption": 0.7},
+        {
+            "interval_start": "2024-01-01T00:00:00Z",
+            "interval_end": "2024-01-01T00:30:00Z",
+            "consumption": 0.5
+        },
+        {
+            "interval_start": "2024-01-01T00:30:00Z",
+            "interval_end": "2024-01-01T01:00:00Z",
+            "consumption": 0.7
+        },
     ]
     # Rate gap: first rate ends before second interval start and no subsequent rate
     rates = [
-        {"valid_from": "2023-12-31T23:30:00Z", "valid_to": "2024-01-01T00:15:00Z", "value_inc_vat": 0.30},
+        {
+            "valid_from": "2023-12-31T23:30:00Z",
+            "valid_to": "2024-01-01T00:15:00Z",
+            "value_inc_vat": 0.30
+        },
     ]
     df = vectorized_rate_join(consumption, rates)
     # only first interval may match depending on boundary, second unmatched

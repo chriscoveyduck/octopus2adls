@@ -42,7 +42,10 @@ def main():
             except Exception as e:
                 print(f"Failed datetime parse for {col}: {e}")
     # Meter identifiers guess
-    candidate_id_cols = [c for c in df.columns if any(k in c.lower() for k in ["mpan", "mprn", "serial", "meter"])]
+    candidate_id_cols = [
+        c for c in df.columns
+        if any(k in c.lower() for k in ["mpan", "mprn", "serial", "meter"])
+    ]
     if candidate_id_cols:
         print("\nDistinct identifier counts:")
         for c in candidate_id_cols:

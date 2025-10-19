@@ -12,15 +12,32 @@ class DummyWriter(DataLakeWriter):
 
 
 def test_rate_match_cost():
-    settings = Settings(octopus_api_key='x', account_number='a', storage_account_name='acc', meters=[])
+    settings = Settings(
+        octopus_api_key='x',
+        account_number='a',
+        storage_account_name='acc',
+        meters=[]
+    )
     writer = DummyWriter(settings)
     meter = Meter(kind='electricity', mpan_or_mprn='mpan', serial='serial')
     consumption = [
-        {"interval_start": "2024-01-01T00:00:00Z", "interval_end": "2024-01-01T00:30:00Z", "consumption": 0.5},
-        {"interval_start": "2024-01-01T00:30:00Z", "interval_end": "2024-01-01T01:00:00Z", "consumption": 0.7},
+        {
+            "interval_start": "2024-01-01T00:00:00Z",
+            "interval_end": "2024-01-01T00:30:00Z",
+            "consumption": 0.5
+        },
+        {
+            "interval_start": "2024-01-01T00:30:00Z",
+            "interval_end": "2024-01-01T01:00:00Z",
+            "consumption": 0.7
+        },
     ]
     rates = [
-        {"valid_from": "2023-12-31T23:30:00Z", "valid_to": "2024-01-01T00:30:00Z", "value_inc_vat": 0.30},
+        {
+            "valid_from": "2023-12-31T23:30:00Z",
+            "valid_to": "2024-01-01T00:30:00Z",
+            "value_inc_vat": 0.30
+        },
         {"valid_from": "2024-01-01T00:30:00Z", "valid_to": None, "value_inc_vat": 0.28},
     ]
     # emulate join logic
@@ -33,6 +50,9 @@ def test_rate_match_cost():
     costs = []
     for _, crow in df_c.iterrows():
         for _, rrow in df_r.iterrows():
-            if crow['interval_start'] >= rrow['valid_from'] and (pd.isna(rrow['valid_to']) or crow['interval_start'] < rrow['valid_to']):
+            if (
+                crow['interval_start'] >= rrow['valid_from'] and
+                (pd.isna(rrow['valid_to']) or crow['interval_start'] < rrow['valid_to'])
+            ):
                 costs.append(crow['consumption'] * rrow['value_inc_vat'])
     assert round(sum(costs), 4) == round(0.5*0.30 + 0.7*0.28, 4)
