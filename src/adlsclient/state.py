@@ -29,7 +29,10 @@ class StateStore:
             if val:
                 # Normalize Z to +00:00 and ensure timezone aware UTC
                 original = val  # kept for potential debugging
-                has_tz = ('Z' in val) or ('+' in val[10:]) or ('-' in val[10:])  # crude detection of offset
+                # crude detection of offset
+                has_tz = (
+                    ('Z' in val) or ('+' in val[10:]) or ('-' in val[10:])
+                )
                 norm = val.replace('Z', '+00:00') if 'Z' in val else val
                 dt_obj = dt.datetime.fromisoformat(norm)
                 if has_tz:

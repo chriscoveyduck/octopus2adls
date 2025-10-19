@@ -30,7 +30,12 @@ class OctopusClient:
             ts = ts.astimezone(dt.timezone.utc)
         return ts.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    @retry(reraise=True, stop=stop_after_attempt(5), wait=wait_exponential(multiplier=0.5, max=10), retry=retry_if_exception_type(httpx.HTTPError))
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=0.5, max=10),
+        retry=retry_if_exception_type(httpx.HTTPError)
+    )
     def _get(self, path: str, params: Dict[str, Any] | None = None) -> Dict[str, Any]:
         url = f"{BASE_URL}{path}"
         resp = self._client.get(url, params=params)
@@ -61,7 +66,10 @@ class OctopusClient:
             results.extend(objs)
             # Debug log page progress (helps validate page_size effectiveness & redirect removal)
             if page == 1 or page % 25 == 0:
-                self._log.debug("Fetched page %s (%s cumulative records) for %s", page, len(results), path)
+                self._log.debug(
+                    "Fetched page %s (%s cumulative records) for %s",
+                    page, len(results), path
+                )
             if not data.get('next'):
                 break
             page += 1
@@ -69,7 +77,11 @@ class OctopusClient:
 
     def get_consumption(self, meter: Meter, start: dt.datetime, end: dt.datetime) -> List[Dict[str, Any]]:
         # API uses UTC ISO format with trailing 'Z' (no offset like +00:00)
-        base_path = f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption" if meter.kind == 'electricity' else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        base_path = (
+            f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+            if meter.kind == 'electricity'
+            else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        )
         path = base_path if base_path.endswith('/') else base_path + '/'
         params = {
             'period_from': self._fmt(start),
@@ -81,7 +93,11 @@ class OctopusClient:
 
     def get_unit_rates(self, product_code: str, tariff_code: str, start: dt.datetime, end: dt.datetime) -> List[Dict[str, Any]]:
         """Retrieve standard unit rates for given product+tariff within window."""
-        base_path = f"/products/{product_code}/electricity-tariffs/{tariff_code}/standard-unit-rates" if tariff_code.startswith('E-') or '-E-' in tariff_code else f"/products/{product_code}/gas-tariffs/{tariff_code}/standard-unit-rates"
+        base_path = (
+            f"/products/{product_code}/electricity-tariffs/{tariff_code}/standard-unit-rates"
+            if tariff_code.startswith('E-') or '-E-' in tariff_code
+            else f"/products/{product_code}/gas-tariffs/{tariff_code}/standard-unit-rates"
+        )
         path = base_path if base_path.endswith('/') else base_path + '/'
         params = {
             'period_from': self._fmt(start),
@@ -95,11 +111,17 @@ class OctopusClient:
     def get_earliest_interval(self, meter: Meter) -> Dict[str, Any] | None:
         """Return earliest interval.
 
-        NOTE: Octopus API returns newest-first by default when order_by not specified (documented behavior varies).
-        To robustly obtain earliest we request explicit ascending order and walk pages until no next link.
-        This can be expensive for multi-year data; callers can implement caching.
+    NOTE: Octopus API returns newest-first by default when order_by not specified
+    (documented behavior varies).
+    To robustly obtain earliest we request explicit ascending order and walk pages
+    until no next link. This can be expensive for multi-year data; callers can
+    implement caching.
         """
-        path = f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption" if meter.kind == 'electricity' else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        path = (
+            f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+            if meter.kind == 'electricity'
+            else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        )
         # Ascending order
         params = { 'order_by': 'period', 'page': 1 }
         data = self._get(path, params)
@@ -125,7 +147,11 @@ class OctopusClient:
 
     def get_latest_interval(self, meter: Meter) -> Dict[str, Any] | None:
         """Return most recent interval (cheap single page)."""
-        path = f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption" if meter.kind == 'electricity' else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        path = (
+            f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+            if meter.kind == 'electricity'
+            else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        )
         params = { 'order_by': '-period', 'page_size': 1 }
         data = self._get(path, params)
         results = data.get('results', [])
@@ -141,7 +167,11 @@ class OctopusClient:
         if baseline_start is None:
             baseline_start = dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc)
         now = dt.datetime.now(dt.timezone.utc)
-        path = f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption" if meter.kind == 'electricity' else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        path = (
+            f"/electricity-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+            if meter.kind == 'electricity'
+            else f"/gas-meter-points/{meter.mpan_or_mprn}/meters/{meter.serial}/consumption"
+        )
         params = {
             'period_from': baseline_start.strftime('%Y-%m-%dT%H:%M:%SZ'),
             'period_to': now.strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -156,7 +186,9 @@ class OctopusClient:
     def get_account(self) -> Dict[str, Any]:
         """Return full account payload including meter points & agreements."""
         # Ensure trailing slash for consistency (Octopus docs show trailing slash)
-        return self._get(f"/accounts/{self.account_number}/")
+        return self._get(
+            f"/accounts/{self.account_number}/"
+        )
 
     @staticmethod
     def parse_tariff_code(tariff_code: str) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
@@ -183,7 +215,8 @@ class OctopusClient:
         """Discover active product & tariff codes per energy kind at the given time.
 
         Returns: { 'electricity': {'tariff_code': ..., 'product_code': ...}, 'gas': {...}}
-        Chooses agreement with latest valid_from where valid_from <= as_of < valid_to (or open-ended valid_to).
+    Chooses agreement with latest valid_from where
+    valid_from <= as_of < valid_to (or open-ended valid_to).
         """
         if as_of is None:
             as_of = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)

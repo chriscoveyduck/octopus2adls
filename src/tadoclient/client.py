@@ -216,7 +216,8 @@ class TadoClient:
                         self._log.info("Verified refresh token persisted in Key Vault.")
                     else:
                         self._log.error(
-                            f"Refresh token mismatch after update! Expected: {self._refresh_token}, "
+                            f"Refresh token mismatch after update! Expected: "
+                            f"{self._refresh_token}, "
                             f"Found: {verify_secret}"
                         )
                 except Exception as e:
@@ -330,12 +331,20 @@ class TadoClient:
                     events.extend(day_events)
                 except httpx.HTTPStatusError as e:
                     if e.response.status_code == 404:
-                        self._log.info(f"No data available for zone {device.zone_id} on {date_str} (404)")
+                        self._log.info(
+                            f"No data available for zone {device.zone_id} on {date_str} (404)"
+                        )
                     else:
-                        self._log.warning(f"HTTP error for zone {device.zone_id} on {date_str}: {e.response.status_code}")
+                        self._log.warning(
+                            f"HTTP error for zone {device.zone_id} on {date_str}: "
+                            f"{e.response.status_code}"
+                        )
                     continue
                 except Exception as e:
-                    self._log.warning(f"Failed to get demand data for zone {device.zone_id} on {date_str}: {e}")
+                    self._log.warning(
+                        f"Failed to get demand data for zone {device.zone_id} on "
+                        f"{date_str}: {e}"
+                    )
                     continue
             
             current_date += dt.timedelta(days=1)
@@ -348,7 +357,10 @@ class TadoClient:
         """
         import httpx
         
-        url = f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/{device.zone_id}/dayReport?date={date_str}"
+        url = (
+            f"https://my.tado.com/api/v2/homes/{self.settings.home_id}/zones/"
+            f"{device.zone_id}/dayReport?date={date_str}"
+        )
         headers = {"Authorization": f"Bearer {self._access_token}"}
         
         resp = httpx.get(url, headers=headers)
@@ -424,12 +436,20 @@ class TadoClient:
                         
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
-                    self._log.info(f"No temperature data available for zone {device.zone_id} on {date_str} (404)")
+                    self._log.info(
+                        f"No temperature data available for zone {device.zone_id} on {date_str} (404)"
+                    )
                 else:
-                    self._log.warning(f"HTTP error for zone {device.zone_id} on {date_str}: {e.response.status_code}")
+                    self._log.warning(
+                        f"HTTP error for zone {device.zone_id} on {date_str}: "
+                        f"{e.response.status_code}"
+                    )
                 continue
             except Exception as e:
-                self._log.warning(f"Failed to get temperature data for zone {device.zone_id} on {date_str}: {e}")
+                self._log.warning(
+                    f"Failed to get temperature data for zone {device.zone_id} on "
+                    f"{date_str}: {e}"
+                )
                 continue
             
             current_date += dt.timedelta(days=1)
@@ -486,7 +506,9 @@ class TadoClient:
                             }
                             temperature_records.append(temp_record)
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing temperature point for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing temperature point for {device.device_id}: {e}"
+                        )
                         continue
         
         # Get humidity readings and create lookup by timestamp
@@ -506,7 +528,9 @@ class TadoClient:
                         if timestamp and value is not None and isinstance(value, (int, float)):
                             humidity_by_timestamp[timestamp] = value
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing humidity point for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing humidity point for {device.device_id}: {e}"
+                        )
                         continue
         
         # Add humidity to temperature records where timestamps match
@@ -549,7 +573,9 @@ class TadoClient:
                                 }
                                 temperature_records.append(target_record)
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing settings interval for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing settings interval for {device.device_id}: {e}"
+                        )
                         continue
         
         return temperature_records

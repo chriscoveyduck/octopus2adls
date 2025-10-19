@@ -38,12 +38,27 @@ def vectorized_rate_join(consumption: List[Dict], rates: List[Dict]) -> pd.DataF
     # mark invalid where idx < 0
     mask_valid = df_c['rate_index'] >= 0
     df_join = df_c[mask_valid].copy()
-    df_join = df_join.merge(df_r.add_prefix('rate_'), left_on='rate_index', right_index=True, how='left')
+    df_join = df_join.merge(
+        df_r.add_prefix('rate_'),
+        left_on='rate_index',
+        right_index=True,
+        how='left'
+    )
     # filter by valid_to constraint
-    cond = (df_join['interval_start'] >= df_join['rate_valid_from']) & (df_join['rate_valid_to'].isna() | (df_join['interval_start'] < df_join['rate_valid_to']))
+    cond = (
+        (df_join['interval_start'] >= df_join['rate_valid_from']) &
+        (
+            df_join['rate_valid_to'].isna() |
+            (df_join['interval_start'] < df_join['rate_valid_to'])
+        )
+    )
     df_join = df_join[cond].copy()
     # choose unit rate inc VAT if present else ex VAT
-    unit_col = 'rate_value_inc_vat' if 'rate_value_inc_vat' in df_join.columns else 'rate_value_ex_vat'
+    unit_col = (
+        'rate_value_inc_vat'
+        if 'rate_value_inc_vat' in df_join.columns
+        else 'rate_value_ex_vat'
+    )
     df_join['unit_rate'] = df_join[unit_col]
     df_join['cost'] = df_join['consumption'] * df_join['unit_rate']
     return df_join.drop(columns=['rate_index'])

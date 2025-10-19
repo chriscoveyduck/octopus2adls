@@ -56,7 +56,10 @@ def main(myTimer: func.TimerRequest) -> None:
     
     # TODO: Add Weather ingestion when weatherclient is implemented
         
-    logging.info(f"Scheduler completed: {total_success} sources succeeded, {total_errors} sources failed")
+    logging.info(
+        f"Scheduler completed: {total_success} sources succeeded, "
+        f"{total_errors} sources failed"
+    )
     
     if total_errors > 0 and total_success == 0:
         # All sources failed - mark function execution as failed
@@ -84,7 +87,10 @@ def run_octopus_ingestion() -> tuple[int, int]:
             # Run incremental ingestion (fetches only new data since last run)
             records_processed = ingest_meter_consumption(client, writer, meter, settings)
             
-            logging.info(f"Successfully processed {records_processed} records for meter {meter.mpan_or_mprn}")
+            logging.info(
+                f"Successfully processed {records_processed} records for meter "
+                f"{meter.mpan_or_mprn}"
+            )
             success_count += 1
             
         except Exception as e:
@@ -92,7 +98,10 @@ def run_octopus_ingestion() -> tuple[int, int]:
             error_count += 1
             # Continue processing other meters even if one fails
             
-    logging.info(f"Octopus ingestion completed: {success_count} meters succeeded, {error_count} meters failed")
+    logging.info(
+        f"Octopus ingestion completed: {success_count} meters succeeded, "
+        f"{error_count} meters failed"
+    )
     return success_count, error_count
 
 def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, meter, settings: Settings) -> int:
@@ -115,15 +124,22 @@ def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, mete
         if overlap_start < earliest_allowed:
             overlap_start = earliest_allowed
         start_time = overlap_start
-        logging.info(f"Resuming from stored interval {last_interval} with overlap. Query start={start_time}")
+        logging.info(
+            f"Resuming from stored interval {last_interval} with overlap. "
+            f"Query start={start_time}"
+        )
     else:
         # First run - fetch last 7 days (could be adjusted to discover true earliest)
         start_time = now - dt.timedelta(days=7)
-        logging.info(f"First run - fetching last 7 days from {start_time}")
+        logging.info(
+            f"First run - fetching last 7 days from {start_time}"
+        )
     
     # Fetch consumption data
     consumption_records = client.get_consumption(meter, start_time, now)
-    logging.info(f"Fetched {len(consumption_records)} consumption records")
+    logging.info(
+        f"Fetched {len(consumption_records)} consumption records"
+    )
     
     if not consumption_records:
         logging.info("No new consumption data")
@@ -146,7 +162,9 @@ def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, mete
         latest_record = max(consumption_records, key=lambda r: r['interval_start'])
         latest_start = _parse(latest_record['interval_start'])
         state_store.set_last_interval(meter.mpan_or_mprn, meter.serial, latest_start)
-        logging.info(f"Updated last interval (stored as latest interval_start) to: {latest_start}")
+        logging.info(
+            f"Updated last interval (stored as latest interval_start) to: {latest_start}"
+        )
     
     return len(consumption_records)
 
@@ -229,12 +247,20 @@ def run_tado_ingestion() -> tuple[int, int]:
                 if all_ts:
                     latest_ts = max(all_ts)
                     state.set_last_interval(device.device_id, device.zone_id, latest_ts)
-                logging.info(f"Heating day {date_str} TRV {device.device_id}: demand={len(demand_events)} temps={len(temp_records)}")
+                logging.info(
+                    f"Heating day {date_str} TRV {device.device_id}: "
+                    f"demand={len(demand_events)} temps={len(temp_records)}"
+                )
                 success += 1
             except Exception as e:
-                logging.error(f"Failed heating ingestion for TRV {device.device_id} on {date_str}: {e}")
+                logging.error(
+                    f"Failed heating ingestion for TRV {device.device_id} on {date_str}: {e}"
+                )
                 errors += 1
         day_cursor += dt.timedelta(days=1)
 
-    logging.info(f"Tado heating ingestion completed: {success} device-day successes, {errors} failures")
+    logging.info(
+        f"Tado heating ingestion completed: {success} device-day successes, "
+        f"{errors} failures"
+    )
     return success, errors

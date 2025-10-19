@@ -116,7 +116,9 @@ class DataLakeWriter:
             # 'consumption' container resulting in paths like consumption/consumption/kind=...
             # New writes omit that extra prefix. Backfill/migration can copy old blobs to the
             # new layout if desired. Old layout remains readable.
-            path = f"kind={meter.kind}/mpan_mprn={meter.mpan_or_mprn}/serial={meter.serial}/date={date_str}/data.parquet"
+            path = (
+                f"kind={meter.kind}/mpan_mprn={meter.mpan_or_mprn}/serial={meter.serial}/date={date_str}/data.parquet"
+            )
             self._write_parquet(path, g.drop(columns=['date']))
 
     def write_unit_rates(self, is_electricity: bool, product_code: str, tariff_code: str, records: List[Dict]):
@@ -142,7 +144,9 @@ class DataLakeWriter:
         # Partition by date (valid_from date) for pruning
         df['date'] = df['valid_from'].dt.date
         for date, g in df.groupby('date'):
-            path = f"rates/energy={'electricity' if is_electricity else 'gas'}/product={product_code}/tariff={tariff_code}/date={date.isoformat()}/data.parquet"
+            path = (
+                f"rates/energy={'electricity' if is_electricity else 'gas'}/product={product_code}/tariff={tariff_code}/date={date.isoformat()}/data.parquet"
+            )
             self._write_parquet(path, g.drop(columns=['date']))
 
     def write_costed_consumption(self, meter, df_costed):
@@ -150,7 +154,9 @@ class DataLakeWriter:
         df = df_costed.copy()
         df['date'] = df['interval_end'].dt.date
         for date, g in df.groupby('date'):
-            path = f"consumption_cost/kind={meter.kind}/mpan_mprn={meter.mpan_or_mprn}/serial={meter.serial}/date={date.isoformat()}/data.parquet"
+            path = (
+                f"consumption_cost/kind={meter.kind}/mpan_mprn={meter.mpan_or_mprn}/serial={meter.serial}/date={date.isoformat()}/data.parquet"
+            )
             self._write_parquet(path, g.drop(columns=['date']))
 
     def write_demand_events(self, trv_id: str, events: List[Dict]):
