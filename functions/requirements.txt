@@ -1,0 +1,12 @@
+azure-functions
+azure-identity==1.15.0
+azure-storage-blob==12.19.0
+azure-keyvault-secrets==4.10.0
+httpx==0.25.2
+tenacity==8.2.3
+pandas==2.1.4
+pyarrow==14.0.2
+python-dotenv==1.0.0
+octopus2adls_shared-0.1.0-py3-none-any.whl
+octopus2adls_shared-0.1.0-py3-none-any.whl
+octopus2adls_shared-0.1.0-py3-none-any.whl

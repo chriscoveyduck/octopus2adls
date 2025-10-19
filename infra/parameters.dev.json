@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  "baseName": { "value": "energyanalyticsdev01" },
+    "location": { "value": "northeurope" },
+    "storageSku": { "value": "Standard_LRS" },
+    "enableLogAnalytics": { "value": true },
+  "functionSku": { "value": "Y1" },
+  "functionStorageSku": { "value": "Standard_LRS" },
+    "tags": { "value": { "project": "energy-analytics", "env": "dev" } }
+  }
+}

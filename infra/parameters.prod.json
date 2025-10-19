@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": { "value": "octopus2adls" },
+    "location": { "value": "northeurope" },
+    "storageSku": { "value": "Standard_GRS" },
+    "enableLogAnalytics": { "value": true },
+    "functionSku": { "value": "Y1" },
+    "tags": { "value": { "project": "octopus2adls", "env": "prod" } }
+  }
+}

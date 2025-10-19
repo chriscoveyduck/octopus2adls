@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": { "value": "<insert_base_name>" },
+  "location": { "value": "<insert_location>" },
+    "storageSku": { "value": "Standard_LRS" },
+    "enableLogAnalytics": { "value": true },
+    "functionSku": { "value": "Y1" },
+    "tags": { "value": { "project": "<insert_base_name", "env": "dev" } }
+  }
+}

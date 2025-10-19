@@ -1,0 +1,6 @@
+# Required settings
+OCTOPUS_API_KEY=your_api_key_here
+OCTOPUS_ACCOUNT_NUMBER=A-12345678
+STORAGE_ACCOUNT_NAME=octopus2adlsdata
+# JSON list of meters
+METERS_JSON=[{"kind":"electricity","mpan_or_mprn":"1234567890123","serial":"ELECTRIC123"},{"kind":"gas","mpan_or_mprn":"1234567","serial":"GAS123"}]

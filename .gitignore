@@ -1,0 +1,76 @@
+###############################
+# Python build / runtime
+###############################
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage*
+coverage.xml
+htmlcov/
+
+# Ruff / lint caches
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code / IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+###############################
+# Azure Functions local
+###############################
+local.settings.json
+infra/local.settings.json
+
+# Ignore sensitive parameter files but keep example
+infra/*.parameters.json
+infra/**/parameters.json
+!infra/parameters.example.json
+
+###############################
+# Environment / secrets
+###############################
+.env
+.env.*
+*.secrets.json
+
+###############################
+# Data artifacts (if any local tests write them)
+###############################
+data/
+tmp/
+*.tmp
+
+###############################
+# Parquet / generated files (avoid committing sample outputs)
+###############################
+*.parquet
+*.snappy.parquet
+
+###############################
+# Copilot instructions
+###############################
+.copilot-instructions.md
