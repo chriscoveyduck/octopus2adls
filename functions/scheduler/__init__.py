@@ -56,7 +56,9 @@ def main(myTimer: func.TimerRequest) -> None:
     
     # TODO: Add Weather ingestion when weatherclient is implemented
         
-    logging.info(f"Scheduler completed: {total_success} sources succeeded, {total_errors} sources failed")
+    logging.info(
+        f"Scheduler completed: {total_success} sources succeeded, {total_errors} sources failed"
+    )
     
     if total_errors > 0 and total_success == 0:
         # All sources failed - mark function execution as failed
@@ -84,7 +86,9 @@ def run_octopus_ingestion() -> tuple[int, int]:
             # Run incremental ingestion (fetches only new data since last run)
             records_processed = ingest_meter_consumption(client, writer, meter, settings)
             
-            logging.info(f"Successfully processed {records_processed} records for meter {meter.mpan_or_mprn}")
+            logging.info(
+                f"Successfully processed {records_processed} records for meter {meter.mpan_or_mprn}"
+            )
             success_count += 1
             
         except Exception as e:
@@ -92,10 +96,15 @@ def run_octopus_ingestion() -> tuple[int, int]:
             error_count += 1
             # Continue processing other meters even if one fails
             
-    logging.info(f"Octopus ingestion completed: {success_count} meters succeeded, {error_count} meters failed")
+    logging.info(
+        f"Octopus ingestion completed: {success_count} meters succeeded, "
+        f"{error_count} meters failed"
+    )
     return success_count, error_count
 
-def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, meter, settings: Settings) -> int:
+def ingest_meter_consumption(
+    client: OctopusClient, writer: DataLakeWriter, meter, settings: Settings
+) -> int:
     """Incremental ingestion for a single meter."""
     state_store = StateStore(settings, writer.service_client)
     
@@ -108,14 +117,17 @@ def ingest_meter_consumption(client: OctopusClient, writer: DataLakeWriter, mete
     # we always overlap by 30 minutes when resuming.
     now = dt.datetime.now(dt.timezone.utc)
     if last_interval:
-        # Overlap by one half-hour interval; subtract 30 minutes (plus a 1s epsilon) to ensure inclusivity
+        # Overlap by one half-hour interval; subtract 30 minutes (plus a 1s epsilon) to ensure
+        # inclusivity
         overlap_start = last_interval - dt.timedelta(minutes=30, seconds=1)
         # Guard against going before a sensible minimum (e.g., 2015 earliest data)
         earliest_allowed = dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc)
         if overlap_start < earliest_allowed:
             overlap_start = earliest_allowed
         start_time = overlap_start
-        logging.info(f"Resuming from stored interval {last_interval} with overlap. Query start={start_time}")
+        logging.info(
+            f"Resuming from stored interval {last_interval} with overlap. Query start={start_time}"
+        )
     else:
         # First run - fetch last 7 days (could be adjusted to discover true earliest)
         start_time = now - dt.timedelta(days=7)
@@ -179,7 +191,8 @@ def run_tado_ingestion() -> tuple[int, int]:
         return 0, 0
 
     now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
-    # Determine per-device last processed date (day-level) based on latest demand event timestamp stored in state
+    # Determine per-device last processed date (day-level) based on latest demand event timestamp
+    # stored in state
     # We store state per (device_id, zone_id) using last interval semantics
     per_device_start: dict[str, dt.datetime] = {}
     earliest = now
@@ -187,7 +200,8 @@ def run_tado_ingestion() -> tuple[int, int]:
     for d in devices:
         last = state.get_last_interval(d.device_id, d.zone_id)
         if last:
-            # Resume from last timestamp truncated to date (to ensure we don't miss tail of that day)
+            # Resume from last timestamp truncated to date (to ensure we don't miss tail of
+            # that day)
             start = last.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             start = now - default_lookback
@@ -209,11 +223,20 @@ def run_tado_ingestion() -> tuple[int, int]:
             try:
                 report = tado_client.get_day_report(device, date_str)
                 demand_events, temp_records = tado_client.parse_day_report(device, report)
-                # Filter out events that are not newer than state last interval (for partial first day) 
+                # Filter out events that are not newer than state last interval (for partial
+                # first day)
                 last_processed = state.get_last_interval(device.device_id, device.zone_id)
                 if last_processed:
-                    demand_events = [e for e in demand_events if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > last_processed]
-                    temp_records = [e for e in temp_records if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > last_processed]
+                    demand_events = [
+                        e for e in demand_events 
+                        if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > 
+                        last_processed
+                    ]
+                    temp_records = [
+                        e for e in temp_records 
+                        if dt.datetime.fromisoformat(e['timestamp'].replace('Z','+00:00')) > 
+                        last_processed
+                    ]
                 if demand_events:
                     writer.write_demand_events(device.device_id, demand_events)
                 if temp_records:
@@ -223,18 +246,27 @@ def run_tado_ingestion() -> tuple[int, int]:
                 for coll in (demand_events, temp_records):
                     for rec in coll:
                         try:
-                            all_ts.append(dt.datetime.fromisoformat(rec['timestamp'].replace('Z','+00:00')))
+                            all_ts.append(
+                                dt.datetime.fromisoformat(rec['timestamp'].replace('Z','+00:00'))
+                            )
                         except Exception:
                             pass
                 if all_ts:
                     latest_ts = max(all_ts)
                     state.set_last_interval(device.device_id, device.zone_id, latest_ts)
-                logging.info(f"Heating day {date_str} TRV {device.device_id}: demand={len(demand_events)} temps={len(temp_records)}")
+                logging.info(
+                    f"Heating day {date_str} TRV {device.device_id}: "
+                    f"demand={len(demand_events)} temps={len(temp_records)}"
+                )
                 success += 1
             except Exception as e:
-                logging.error(f"Failed heating ingestion for TRV {device.device_id} on {date_str}: {e}")
+                logging.error(
+                    f"Failed heating ingestion for TRV {device.device_id} on {date_str}: {e}"
+                )
                 errors += 1
         day_cursor += dt.timedelta(days=1)
 
-    logging.info(f"Tado heating ingestion completed: {success} device-day successes, {errors} failures")
+    logging.info(
+        f"Tado heating ingestion completed: {success} device-day successes, {errors} failures"
+    )
     return success, errors

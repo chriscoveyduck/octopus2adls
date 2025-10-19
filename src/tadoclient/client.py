@@ -9,26 +9,6 @@ import time
 from .config import TadoSettings, TadoDevice
 
 class TadoClient:
-    def get_day_report(self, device, date_str):
-        """
-        Fetch the day report for a given device and date (ISO format string, e.g. '2025-10-18').
-        Returns the raw JSON response from the Tado API.
-        """
-        if not self._access_token:
-            self.authenticate()
-        import httpx
-        # device should have home_id and zone_id attributes
-        home_id = getattr(device, 'home_id', None) or getattr(self.settings, 'home_id', None)
-        zone_id = getattr(device, 'zone_id', None)
-        if home_id is None or zone_id is None:
-            raise ValueError("Device must have home_id and zone_id")
-        url = (
-            f"https://my.tado.com/api/v2/homes/{home_id}/zones/{zone_id}/dayReport?date={date_str}"
-        )
-        headers = {"Authorization": f"Bearer {self._access_token}"}
-        resp = httpx.get(url, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
     """
     Client for Tado thermostat API.
     Fetches demand generation events: which TRVs are requesting heating at any moment.
@@ -216,11 +196,13 @@ class TadoClient:
                         self._log.info("Verified refresh token persisted in Key Vault.")
                     else:
                         self._log.error(
-                            f"Refresh token mismatch after update! Expected: {self._refresh_token}, "
-                            f"Found: {verify_secret}"
+                            f"Refresh token mismatch after update! Expected: "
+                            f"{self._refresh_token}, Found: {verify_secret}"
                         )
                 except Exception as e:
-                    self._log.error(f"Failed to update or verify refresh token in Key Vault: {e}")
+                    self._log.error(
+                        f"Failed to update or verify refresh token in Key Vault: {e}"
+                    )
         
         expires_in = token_data.get("expires_in", 600)
         self._token_expires_in = expires_in
@@ -232,7 +214,8 @@ class TadoClient:
     def _ensure_valid_token(self):
         """
         Check if access token needs refresh and refresh it proactively.
-    # Refreshes when 80% of token lifetime has elapsed (typically ~8 minutes for 10-minute tokens).
+    # Refreshes when 80% of token lifetime has elapsed (typically ~8 minutes for 10-minute 
+    # tokens).
         If refresh token has expired, re-authenticates completely.
         """
         if not self._access_token:
@@ -261,7 +244,8 @@ class TadoClient:
                     self._refresh_access_token()
             except Exception as e:
                 self._log.warning(f"Proactive token refresh failed: {e}")
-                # Continue with existing token - will fail on next API call if truly expired
+                # Continue with existing token - will fail on next API call if truly 
+                # expired
 
     def get_homes(self) -> list:
         """
@@ -330,12 +314,19 @@ class TadoClient:
                     events.extend(day_events)
                 except httpx.HTTPStatusError as e:
                     if e.response.status_code == 404:
-                        self._log.info(f"No data available for zone {device.zone_id} on {date_str} (404)")
+                        self._log.info(
+                            f"No data available for zone {device.zone_id} on {date_str} (404)"
+                        )
                     else:
-                        self._log.warning(f"HTTP error for zone {device.zone_id} on {date_str}: {e.response.status_code}")
+                        self._log.warning(
+                            f"HTTP error for zone {device.zone_id} on {date_str}: "
+                            f"{e.response.status_code}"
+                        )
                     continue
                 except Exception as e:
-                    self._log.warning(f"Failed to get demand data for zone {device.zone_id} on {date_str}: {e}")
+                    self._log.warning(
+                        f"Failed to get demand data for zone {device.zone_id} on {date_str}: {e}"
+                    )
                     continue
             
             current_date += dt.timedelta(days=1)
@@ -369,7 +360,9 @@ class TadoClient:
                         "requested": True,
                         "heat_demand": interval["value"],  # e.g., "LOW", "MEDIUM", "HIGH"
                         "timestamp": interval["from"],
-                        "duration_minutes": self._calculate_interval_minutes(interval["from"], interval["to"])
+                        "duration_minutes": self._calculate_interval_minutes(
+                            interval["from"], interval["to"]
+                        )
                     })
         
         return events
@@ -418,18 +411,28 @@ class TadoClient:
                 
                 # Filter records to the requested time range
                 for record in day_records:
-                    record_time = dt.datetime.fromisoformat(record["timestamp"].replace('Z', '+00:00'))
+                    record_time = dt.datetime.fromisoformat(
+                        record["timestamp"].replace('Z', '+00:00')
+                    )
                     if period_from <= record_time <= period_to:
                         temperature_records.append(record)
                         
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
-                    self._log.info(f"No temperature data available for zone {device.zone_id} on {date_str} (404)")
+                    self._log.info(
+                        f"No temperature data available for zone {device.zone_id} on "
+                        f"{date_str} (404)"
+                    )
                 else:
-                    self._log.warning(f"HTTP error for zone {device.zone_id} on {date_str}: {e.response.status_code}")
+                    self._log.warning(
+                        f"HTTP error for zone {device.zone_id} on {date_str}: "
+                        f"{e.response.status_code}"
+                    )
                 continue
             except Exception as e:
-                self._log.warning(f"Failed to get temperature data for zone {device.zone_id} on {date_str}: {e}")
+                self._log.warning(
+                    f"Failed to get temperature data for zone {device.zone_id} on {date_str}: {e}"
+                )
                 continue
             
             current_date += dt.timedelta(days=1)
@@ -455,7 +458,9 @@ class TadoClient:
         # Extract measured data - this is the correct structure based on API response
         measured_data = day_data.get("measuredData")
         if not measured_data or not isinstance(measured_data, dict):
-            self._log.info(f"No measured data found for device {device.device_id} on {date_str}")
+            self._log.info(
+                f"No measured data found for device {device.device_id} on {date_str}"
+            )
             return []
         
         # Get inside temperature readings
@@ -476,7 +481,8 @@ class TadoClient:
                             continue
                             
                         celsius_temp = value.get("celsius")
-                        if celsius_temp is not None and isinstance(celsius_temp, (int, float)):
+                        if (celsius_temp is not None and 
+                            isinstance(celsius_temp, (int, float))):
                             temp_record = {
                                 "device_id": device.device_id,
                                 "zone_id": device.zone_id,
@@ -486,7 +492,9 @@ class TadoClient:
                             }
                             temperature_records.append(temp_record)
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing temperature point for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing temperature point for {device.device_id}: {e}"
+                        )
                         continue
         
         # Get humidity readings and create lookup by timestamp
@@ -503,10 +511,13 @@ class TadoClient:
                         timestamp = point.get("timestamp")
                         value = point.get("value")
                         
-                        if timestamp and value is not None and isinstance(value, (int, float)):
+                        if (timestamp and value is not None and 
+                            isinstance(value, (int, float))):
                             humidity_by_timestamp[timestamp] = value
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing humidity point for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing humidity point for {device.device_id}: {e}"
+                        )
                         continue
         
         # Add humidity to temperature records where timestamps match
@@ -539,7 +550,8 @@ class TadoClient:
                         if (power == "ON" and temp_setting and 
                             isinstance(temp_setting, dict)):
                             celsius_target = temp_setting.get("celsius")
-                            if celsius_target is not None and isinstance(celsius_target, (int, float)):
+                            if (celsius_target is not None and 
+                                isinstance(celsius_target, (int, float))):
                                 target_record = {
                                     "device_id": device.device_id,
                                     "zone_id": device.zone_id,
@@ -549,12 +561,16 @@ class TadoClient:
                                 }
                                 temperature_records.append(target_record)
                     except (AttributeError, TypeError, KeyError) as e:
-                        self._log.warning(f"Error processing settings interval for {device.device_id}: {e}")
+                        self._log.warning(
+                            f"Error processing settings interval for {device.device_id}: {e}"
+                        )
                         continue
         
         return temperature_records
 
-    def get_temperature_events(self, device: TadoDevice, period_from: dt.datetime, period_to: dt.datetime) -> List[Dict[str, Any]]:
+    def get_temperature_events(
+        self, device: TadoDevice, period_from: dt.datetime, period_to: dt.datetime
+    ) -> List[Dict[str, Any]]:
         """
         Compatibility method that calls get_temperature_data.
         """
@@ -577,24 +593,7 @@ class TadoClient:
         # TODO: Implement Tado API calls
         raise NotImplementedError("Tado heating data retrieval not yet implemented")
     
-    def get_temperature_events(self, device: TadoDevice, period_from: dt.datetime, period_to: dt.datetime) -> List[Dict[str, Any]]:
-        """
-        Fetch temperature readings for a TRV over a time period.
-        Returns a list of events: {trv_id, zone_id, temperature, timestamp}
-        Timestamps are normalized to UTC ISO 8601.
-        """
-        events = []
-        # TODO: Replace with real Tado API call to fetch temperature data for this TRV
-        # Example endpoint: /api/v2/homes/{home_id}/zones/{zone_id}/temperature
-        # Simulate with placeholder data for now
-        event = {
-            "trv_id": device.device_id,
-            "zone_id": device.zone_id,
-            "temperature": 21.5,  # Example temperature
-            "timestamp": period_from.replace(tzinfo=dt.timezone.utc).isoformat().replace('+00:00', 'Z'),
-        }
-        events.append(event)
-        return events
+
     
     def enumerate_devices(self) -> list:
         """
@@ -625,7 +624,10 @@ class TadoClient:
             return devices
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                self._log.error(f"Access denied to Tado API. Check token permissions and home_id: {self.settings.home_id}")
+                self._log.error(
+                    f"Access denied to Tado API. Check token permissions and home_id: "
+                    f"{self.settings.home_id}"
+                )
                 # Return placeholder devices for testing
                 self._log.warning("Using placeholder device for testing")
                 return [TadoDevice(
@@ -652,7 +654,9 @@ class TadoClient:
         resp.raise_for_status()
         return resp.json()
 
-    def parse_day_report(self, device: TadoDevice, day_data: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def parse_day_report(
+        self, device: TadoDevice, day_data: Dict[str, Any]
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Parse a dayReport JSON for both demand events and temperature records.
         Returns (demand_events, temperature_records)."""
         demand_events: List[Dict[str, Any]] = []
@@ -671,7 +675,9 @@ class TadoClient:
                     "requested": True,
                     "heat_demand": interval.get("value"),
                     "timestamp": interval.get("from"),
-                    "duration_minutes": self._calculate_interval_minutes(interval.get("from"), interval.get("to")) if interval.get("from") and interval.get("to") else None
+                    "duration_minutes": self._calculate_interval_minutes(
+                        interval.get("from"), interval.get("to")
+                    ) if interval.get("from") and interval.get("to") else None
                 })
             except Exception:
                 continue
@@ -728,8 +734,11 @@ class TadoClient:
                 continue
         return demand_events, temperature_records
 
-    def iterate_day_reports(self, period_from: dt.datetime, period_to: dt.datetime) -> Iterator[Tuple[str, TadoDevice, Dict[str, Any]]]:
-        """Yield (date_str, device, day_report_json) for each device/day in range (single fetch per pair)."""
+    def iterate_day_reports(
+        self, period_from: dt.datetime, period_to: dt.datetime
+    ) -> Iterator[Tuple[str, TadoDevice, Dict[str, Any]]]:
+        """Yield (date_str, device, day_report_json) for each device/day in range (single fetch 
+        per pair)."""
         devices = [d for d in self.enumerate_devices() if d.device_type == "trv"]
         current_date = period_from.date()
         end_date = period_to.date()
@@ -740,6 +749,8 @@ class TadoClient:
                     data = self.get_day_report(device, date_str)
                     yield date_str, device, data
                 except Exception as e:
-                    self._log.warning(f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}")
+                    self._log.warning(
+                        f"Failed dayReport fetch for zone {device.zone_id} on {date_str}: {e}"
+                    )
                     continue
             current_date += dt.timedelta(days=1)
